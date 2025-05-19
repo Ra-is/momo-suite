@@ -100,13 +100,13 @@ class MomoSuiteServiceProvider extends ServiceProvider
         $this->app['router']->pushMiddlewareToGroup('web', ShareErrorsFromSession::class);
 
         if ($this->app->runningInConsole()) {
-            // Define default publishable files (config and migrations)
+            // Only config and migrations by default
             $this->publishes([
                 __DIR__ . '/../config/momo-suite.php' => config_path('momo-suite.php'),
                 __DIR__ . '/../database/migrations' => database_path('migrations/momo-suite'),
             ]);
 
-            // Define publishable files with tags
+            // Tagged publishes for other assets
             $this->publishes([
                 __DIR__ . '/../routes/web.php' => base_path('routes/momo-suite.php'),
             ], 'momo-suite-routes');
@@ -119,7 +119,7 @@ class MomoSuiteServiceProvider extends ServiceProvider
                 __DIR__ . '/../public' => public_path('vendor/momo-suite'),
             ], 'momo-suite-assets');
 
-            // Define the 'all' tag to include everything
+            // 'all' tag for everything
             $this->publishes([
                 __DIR__ . '/../config/momo-suite.php' => config_path('momo-suite.php'),
                 __DIR__ . '/../database/migrations' => database_path('migrations/momo-suite'),
