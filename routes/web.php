@@ -3,11 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Rais\MomoSuite\Http\Controllers\DashboardController;
 use Rais\MomoSuite\Http\Controllers\AuthController;
-use Rais\MomoSuite\Http\Controllers\HubtelWebhookController;
-use Rais\MomoSuite\Http\Controllers\KorbaWebhookController;
-use Rais\MomoSuite\Http\Controllers\ItcWebhookController;
 use Rais\MomoSuite\Http\Controllers\UserController;
-use Rais\MomoSuite\Http\Controllers\PaystackWebhookController;
+
 
 // Auth Routes
 Route::prefix('momo')->name('momo.')->middleware('web')->group(function () {
