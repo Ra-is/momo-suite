@@ -4,12 +4,10 @@ namespace Rais\MomoSuite\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Str;
 
 class Transaction extends Model
 {
-    use HasUuids;
-
     protected $table = 'momo_transactions';
 
     protected $guarded = [];
@@ -22,6 +20,20 @@ class Transaction extends Model
         'callback_data' => 'json',
         'callback_received_at' => 'datetime',
     ];
+
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
+    }
 
     public function logs(): HasMany
     {

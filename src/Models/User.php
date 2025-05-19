@@ -3,12 +3,10 @@
 namespace Rais\MomoSuite\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Rais\MomoSuite\Models\Traits\HasUuid;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use HasUuid;
-
     protected $table = 'momo_users';
 
     protected $fillable = [
@@ -27,6 +25,20 @@ class User extends Authenticatable
     protected $casts = [
         'permissions' => 'array',
     ];
+
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
+    }
 
     /**
      * Get the is_admin attribute.
