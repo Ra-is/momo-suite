@@ -16,6 +16,7 @@ A powerful, flexible Mobile Money Payment Suite for Laravel supporting multiple 
 -   Transaction logging and status tracking
 -   Extensible provider system
 -   Laravel 8, 9, 10, 11 support (PHP 8+)
+-   **Korba is used as the default provider if none is set.**
 
 ---
 
@@ -29,7 +30,7 @@ composer require rais/momo-suite
 
 ## Configuration
 
-You should publish the migration and the config/momo-suite.php config file with:
+You should publish all package assets (config, migrations, views, routes, public) with:
 
 ```bash
 php artisan vendor:publish --provider="Rais\MomoSuite\MomoSuiteServiceProvider"
@@ -40,23 +41,35 @@ php artisan vendor:publish --provider="Rais\MomoSuite\MomoSuiteServiceProvider"
     ```bash
     php artisan migrate
     ```
-3. **Dashboard UI (Optional)**
+3. **Dashboard UI & Admin User**
 
     - Enable the dashboard by setting `MOMO_SUITE_LOAD_DASHBOARD=true` in your `.env` file
-    - To customize the dashboard views, publish them with:
-
-    ```bash
-    php artisan momo-suite:install --views
-    ```
-
     - The views will be published to `resources/views/vendor/momo-suite`
     - Note: Publishing views will make it harder to receive view updates from the package
 
-4. **Other Customizations (Optional)**
+    ### 👤 Create an Admin User
+
+    You can create an admin user for the system using the provided Artisan command.
+
+    **🔹 Option 1: Create Default Admin**
+
     ```bash
-    php artisan momo-suite:install --routes    # Customize routes
-    php artisan momo-suite:install --all       # Publish everything
+    php artisan momo-suite:create-admin --default
     ```
+
+    ⚠️ Note: This will create a default admin user with the following credentials:
+
+    - Email: admin@momo-suite.com
+    - Password: password
+      ✅ Important: You should log in and change these credentials immediately after your first login for security reasons.
+
+    **🔹 Option 2: Create Custom Admin**
+
+    ```bash
+    php artisan momo-suite:create-admin
+    ```
+
+    This will prompt you to enter the admin's name, email, and password manually during execution.
 
 ---
 
@@ -64,68 +77,157 @@ php artisan vendor:publish --provider="Rais\MomoSuite\MomoSuiteServiceProvider"
 
 ### Sending Money
 
+## Usage Examples
+
+> **Available network providers for the `network` parameter:**
+>
+> -   MTN
+> -   TELECEL
+> -   AIRTELTIGO
+
+### Receive Money (Korba, default provider)
+
+```php
+$momo = app('momo-suite');
+
+$receive = $momo->receive([
+    'phone' => '0241234567',
+    'amount' => 1.00,
+    'network' => 'MTN',
+    'reference' => 'Testing',
+    'meta' => [
+        'customer_name' => 'User one',
+        'customer_email' => 'userone@example.com',
+    ], // optional
+]);
+```
+
+### Send Money (Korba, default provider)
+
+```php
+$momo = app('momo-suite');
+
+$send = $momo->send([
+    'phone' => '0241234567',
+    'amount' => 1.00,
+    'network' => 'MTN',
+    'reference' => 'Test sending money',
+]);
+```
+
+### Use a Specific Provider (e.g., Hubtel)
+
+```php
+$momo = app('momo-suite');
+$momo->setProvider('hubtel');
+
+$send = $momo->send([
+    'phone' => '0241234567',
+    'amount' => 1.00,
+    'network' => 'MTN',
+    'reference' => 'Test Payment',
+    'customer_name' => 'username', // Required for Hubtel
+]);
+```
+
+### Receive Money with Hubtel
+
+```php
+$momo = app('momo-suite');
+$momo->setProvider('hubtel');
+
+$receive = $momo->receive([
+    'phone' => '0241234567',
+    'amount' => 1.00,
+    'network' => 'MTN',
+    'reference' => 'Test Payment',
+    'customer_name' => 'username', // Required for Hubtel
+]);
+```
+
+### Send Money using Facade (Hubtel)
+
 ```php
 use Rais\MomoSuite\Facades\Momo;
 
-$result = Momo::send([
-    'phone' => '0240000000',
-    'amount' => 10.00,
-    'network' => 'MTN',
-    'reference' => 'Payment for Order #123',
-    // 'provider' => 'paystack', // Optional: set provider
-    // 'email' => 'user@example.com', // Required for Paystack
-    // 'customer_name' => 'John Doe', // Required for some providers
-]);
-```
-
-### Receiving Money
-
-```php
-$result = Momo::receive([
-    'phone' => '0240000000',
-    'amount' => 5.00,
-    'network' => 'MTN',
-    'reference' => 'Collect for Invoice #456',
-]);
-```
-
-### Setting Provider
-
-```php
 Momo::setProvider('hubtel');
+
+$send = Momo::send([
+    'phone' => '0241234567',
+    'amount' => 1.00,
+    'network' => 'MTN',
+    'reference' => 'Test Disbursement',
+    'customer_name' => 'username', // Required for Hubtel
+]);
 ```
 
----
+### Receive Money with Paystack
 
-## Webhooks
+```php
+$momo = app('momo-suite');
+$momo->setProvider('paystack');
 
--   Set your webhook URLs in your provider dashboard (e.g., Paystack).
--   The package will handle incoming callbacks and update transaction statuses automatically.
+$receive = $momo->receive([
+    'phone' => '0241234567',
+    'amount' => 1.00,
+    'email' => 'user@example.com', // Required for Paystack
+    'network' => 'MTN',
+    'reference' => 'Test receive Payment',
+]);
+```
 
----
+### Send Money with Paystack
 
-## Testing
+```php
+$momo = app('momo-suite');
+$momo->setProvider('paystack');
 
-You can use the included API routes for local testing (see `routes/api.php`).
+$send = $momo->send([
+    'phone' => '0241234567',
+    'amount' => 1.00,
+    'email' => 'user@example.com', // Required for Paystack
+    'network' => 'MTN',
+    'customer_name' => 'username', // Required for Paystack
+    'reference' => 'Test',
+]);
+```
 
----
+### Verify OTP with Paystack
 
-## Contributing
+```php
+$momo = app('momo-suite');
+$momo->setProvider('paystack');
 
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/my-feature`)
-3. Commit your changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/my-feature`)
-5. Create a new Pull Request
+$otp = $momo->verifyOtp([
+    'otp' => '123456',
+    'reference' => 'transaction-reference',
+]);
+```
 
----
+### Receive Money with ITC
 
-## License
+```php
+$momo = app('momo-suite');
+$momo->setProvider('itc');
 
-MIT © [Rais](mailto:osumanurais@gmail.com)
+$receive = $momo->receive([
+    'phone' => '0241234567',
+    'amount' => 1,
+    'network' => 'MTN',
+    'reference' => 'Testing ITC',
+]);
+```
 
----
+### Send Money with ITC
 
-## More Information
+```php
+$momo = app('momo-suite');
+$momo->setProvider('itc');
 
-For detailed documentation, guides, and examples, visit our [Getting Started Guide](https://rais.gitbook.io/momo-suite/getting-started).
+$send = $momo->send([
+    'phone' => '0241234567',
+    'amount' => 0.5,
+    'network' => 'MTN',
+    'reference' => 'Test Disbursement ITC',
+]);
+```
